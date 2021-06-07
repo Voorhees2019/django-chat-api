@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+<h1>Welcome to Yalantis-Django Project</h1>
+<div class="my-3">
+    <a href="{% url 'about' %}" class="btn btn-primary">About Us</a>
+    <a href="{% url 'contacts' %}" class="btn btn-primary">Contacts</a>
+    <a href="{% url 'authors' %}" class="btn btn-primary">Authors</a>
+</div>
+
+<p align='justify'>
+    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quae ipsa quos minus earum fugit facere sunt. Numquam nisi
+    ut ad sequi asperiores ipsam optio assumenda distinctio inventore, earum voluptates recusandae.
+    Magni ipsam fugiat quae perspiciatis voluptate labore nulla ea cumque tenetur et eius, a reprehenderit sint soluta
+    voluptas assumenda perferendis quisquam doloremque minus molestias. Beatae, blanditiis quaerat? Sit, mollitia
+    veniam.
+    Accusamus illo id expedita molestias debitis ducimus veritatis vero assumenda voluptate alias officiis possimus,
+    dolorem in maiores error laborum temporibus ut nam, quae optio. Impedit corrupti expedita possimus alias corporis?
+    Aut corrupti placeat ipsa eligendi, excepturi voluptates distinctio ducimus et deleniti provident minus sunt ullam
+    itaque illum perspiciatis. Illo, cumque et. Obcaecati omnis maiores ratione earum magnam repellendus similique
+    numquam.
+    Voluptatum, non aperiam. Laborum at tempore nostrum cum! Odio harum maiores hic alias, adipisci laudantium sequi
+    tenetur! Iste natus ipsa animi facere vero voluptas consequuntur, laborum reiciendis suscipit iusto labore!
+</p>
+{% endblock content %}
