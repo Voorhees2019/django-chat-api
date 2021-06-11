@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     # Installed
     "debug_toolbar",
     # Custom
+    "accounts",
+    "dialogs",
 ]
 
 MIDDLEWARE = [
@@ -59,6 +61,8 @@ TEMPLATES = [
         },
     },
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 WSGI_APPLICATION = "yalantis_django.wsgi.application"
 
