@@ -15,5 +15,5 @@ class MessageAdmin(admin.ModelAdmin):
     list_display = ("id", "thread", "sender", "created_at", "updated_at")
     list_display_links = ("id", "thread")
     list_filter = ("sender", "thread")
-    search_fields = ("sender",)
+    search_fields = ("sender__email", "sender__username")
     list_per_page = 25

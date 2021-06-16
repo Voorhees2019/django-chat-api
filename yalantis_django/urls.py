@@ -10,4 +10,5 @@ urlpatterns = [
     path("about-us/", views.about, name="about"),
     path("contacts/", views.contacts, name="contacts"),
     path("authors/", views.authors, name="authors"),
+    path("accounts/", include("accounts.urls")),
 ]

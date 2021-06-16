@@ -1,4 +1,5 @@
 from pathlib import Path
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Installed
     "debug_toolbar",
+    "crispy_forms",
     # Custom
     "accounts",
     "dialogs",
@@ -125,3 +127,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.EmailOrUsernameModelBackend",
+]
+
+# Messages
+MESSAGE_TAGS = {messages.ERROR: "danger"}
+
+CRISPY_TEMPLATE_PACK = "bootstrap4"
