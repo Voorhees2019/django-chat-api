@@ -1,5 +1,6 @@
 from django.db import models
 from accounts.models import User
+from .managers import MessageManager
 
 
 class Thread(models.Model):
@@ -17,6 +18,8 @@ class Message(models.Model):
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_read = models.BooleanField(default=False)
+    objects = MessageManager()
 
     def __str__(self):
         return f"Message from {self.sender} to {self.thread}"
