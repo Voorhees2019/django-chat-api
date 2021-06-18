@@ -26,16 +26,16 @@
                         <a class="nav-link" href="">Welcome, {{ user.username }}</a>
                     </li>
                     <li class="nav-item mr-3">
-                        <a class="nav-link" href="{% url 'logout' %}">
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
                             <i class="fas fa-sign-out-alt"></i> Logout</a>
                     </li>
                 {% else %}
                     <li class="nav-item mr-3 {% if 'register' in request.path %}active{% endif %}">
-                        <a class="nav-link" href="{% url 'register' %}">
+                        <a class="nav-link" href="{% url 'accounts:register' %}">
                             <i class="fas fa-user-plus"></i> Register</a>
                     </li>
                     <li class="nav-item mr-3 {% if 'login' in request.path %}active{% endif %}">
-                        <a class="nav-link" href="{% url 'login' %}">
+                        <a class="nav-link" href="{% url 'accounts:login' %}">
                             <i class="fas fa-sign-in-alt"></i> Login</a>
                     </li>
                 {% endif %}
