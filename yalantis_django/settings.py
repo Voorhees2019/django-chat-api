@@ -136,3 +136,7 @@ AUTHENTICATION_BACKENDS = [
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+LOGIN_REDIRECT_URL = "home"
+LOGIN_URL = "accounts:login"
+LOGOUT_REDIRECT_URL = "accounts:login"
