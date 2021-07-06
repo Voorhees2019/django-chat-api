@@ -20,8 +20,8 @@ class EmailOrUsernameModelBackend(object):
         if user.check_password(password):
             return user
 
-    def get_user(self, username):
+    def get_user(self, pk):
         try:
-            return User.objects.get(pk=username)
+            return User.objects.get(pk=pk)
         except User.DoesNotExist:
             return None

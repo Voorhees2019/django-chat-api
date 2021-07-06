@@ -8,18 +8,18 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('dialogs', '0001_initial'),
+        ("dialogs", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='message',
-            name='is_read',
+            model_name="message",
+            name="is_read",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='thread',
-            name='participants',
+            model_name="thread",
+            name="participants",
             field=models.ManyToManyField(to=settings.AUTH_USER_MODEL),
         ),
     ]

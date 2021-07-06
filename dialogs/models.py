@@ -15,7 +15,9 @@ class Thread(models.Model):
 class Message(models.Model):
     text = models.TextField()
     sender = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
+    thread = models.ForeignKey(
+        Thread, on_delete=models.CASCADE, related_name="thread_messages"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_read = models.BooleanField(default=False)
