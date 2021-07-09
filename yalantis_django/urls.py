@@ -13,7 +13,7 @@ urlpatterns = [
     path("authors/", views.authors, name="authors"),
     path("accounts/", include("accounts.urls")),
     path("api/v1/dialogs/", include("dialogs.urls")),
-    path("api/v1/get-auth-token/", obtain_jwt_token),
+    path("api/v1/get-auth-token/", obtain_jwt_token, name="get_auth_token"),
 ]
 
 if DEBUG:
