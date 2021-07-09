@@ -1,22 +1,18 @@
-from django.core.paginator import Paginator
-from django.conf import settings
-from rest_framework import generics, permissions, status
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from rest_framework.decorators import api_view, permission_classes
 from .serializers import (
     ThreadSerializer,
     MessageSerializer,
 )
 from .models import Thread, Message
 from .services import (
-    user_has_thread_permission,
-    user_has_message_permission,
-    read_interlocutor_messages_before,
+    read_interlocutor_messages_until,
     read_all_interlocutor_messages,
 )
-from .permissions import IsParticipant
+from .permissions import IsThreadParticipant, MessagePermission
 
 
 class ThreadListCreate(generics.ListCreateAPIView):
@@ -31,29 +27,23 @@ class ThreadListCreate(generics.ListCreateAPIView):
         )
 
     def post(self, request, *args, **kwargs):
-
         serializer = ThreadSerializer(data=request.data, context={"request": request})
 
         if not serializer.is_valid():
             raise ValidationError(serializer.errors)
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ThreadRetrieveDestroy(generics.RetrieveDestroyAPIView):
     serializer_class = ThreadSerializer
-    permission_classes = [permissions.IsAuthenticated, IsParticipant]
+    permission_classes = [permissions.IsAuthenticated, IsThreadParticipant]
 
     def get_queryset(self):
         return Thread.objects.all()
 
     def delete(self, request, *args, **kwargs):
-        try:
-            thread = Thread.objects.get(pk=self.kwargs.get("pk"))
-        except Thread.DoesNotExist:
-            raise ValidationError("[ERROR] Thread doesn't exist")
-
-        self.check_object_permissions(request=self.request, obj=thread)
+        thread = self.get_object()  # checking thread permissions here
 
         # delete thread if there are no participants
         if thread.participants.count() <= 1:
@@ -64,69 +54,76 @@ class ThreadRetrieveDestroy(generics.RetrieveDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(["GET", "POST"])
-@permission_classes([permissions.IsAuthenticated])
-def messages_list(request, thread_pk: int):
+class MessageViewSet(viewsets.ModelViewSet):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated, IsThreadParticipant]
 
-    user_has_thread_permission(user=request.user, thread_pk=thread_pk)
+    def get_queryset(self):
+        return Message.objects.all()
 
-    if request.method == "GET":
-        messages = Message.objects.filter(thread__pk=thread_pk).order_by("-created_at")
-        paginator = Paginator(messages, settings.REST_FRAMEWORK.get("PAGE_SIZE"))
-        page = paginator.get_page(request.GET.get("page"))
-        serializer = MessageSerializer(page, many=True)
-        serializer = MessageSerializer(messages, many=True)
+    def list(self, request, *args, **kwargs):
+        """
+        Lists a queryset.
+        """
+        thread = get_object_or_404(Thread, pk=self.kwargs.get("thread_pk"))
+        # checking thread permissions
+        self.check_object_permissions(request=self.request, obj=thread)
+
+        queryset = self.get_queryset().filter(thread=thread)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(self.queryset, many=True)
         return Response(serializer.data)
-    elif request.method == "POST":
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a Message instance.
+        """
+        thread = get_object_or_404(Thread, pk=self.kwargs.get("thread_pk"))
+        # checking thread permissions
+        self.check_object_permissions(request=self.request, obj=thread)
+
         # read all previous interlocutor's messages before sending a new one
-        read_all_interlocutor_messages(user=request.user, thread_pk=thread_pk)
+        read_all_interlocutor_messages(user=request.user, thread_pk=thread.pk)
 
-        request.data.update(sender=request.user.id, thread=thread_pk)
-
-        serializer = MessageSerializer(data=request.data)
+        # defining request.user as a sender of created message and specifying a thread the message belongs to
+        request.data.update(sender=request.user.id, thread=self.kwargs.get("thread_pk"))
+        serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             raise ValidationError(serializer.errors)
 
-        message = serializer.save()
-        return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+        msg = serializer.save()
+        return Response(self.get_serializer(msg).data, status=status.HTTP_201_CREATED)
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ["list", "create"]:
+            self.permission_classes = [permissions.IsAuthenticated, IsThreadParticipant]
+        else:
+            self.permission_classes = [permissions.IsAuthenticated, MessagePermission]
+        return super().get_permissions()
 
 
-@api_view(["GET", "PATCH", "DELETE"])
-@permission_classes([permissions.IsAuthenticated])
-def message(request, thread_pk: int, message_pk: int):
+class MessagesReadUntil(generics.CreateAPIView):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated, IsThreadParticipant]
 
-    user_has_thread_permission(user=request.user, thread_pk=thread_pk)
-    user_has_message_permission(user=request.user, message_pk=message_pk)
+    def post(self, request, *args, **kwargs):
+        thread = get_object_or_404(Thread, pk=self.kwargs.get("thread_pk"))
+        # checking thread permissions
+        self.check_object_permissions(request=self.request, obj=thread)
 
-    # Must not wrap in try block because the function above have already checked if that message exists
-    message = Message.objects.get(pk=message_pk)
+        message_pk = request.data.get("message_id")
 
-    if request.method == "GET":
-        serializer = MessageSerializer(message)
-        return Response(serializer.data)
-    elif request.method == "PATCH":
-        serializer = MessageSerializer(
-            data=request.data, instance=message, partial=True
+        read_interlocutor_messages_until(
+            user=request.user, thread_pk=thread.pk, message_pk=message_pk
         )
-        if not serializer.is_valid():
-            raise ValidationError(serializer.errors)
 
-        message = serializer.save()
-        return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
-    elif request.method == "DELETE":
-        message.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
-def message_read_until(request, thread_pk: int):
-    user_has_thread_permission(user=request.user, thread_pk=thread_pk)
-
-    message_pk = request.data.get("message_id")
-
-    read_interlocutor_messages_before(
-        user=request.user, thread_pk=thread_pk, message_pk=message_pk
-    )
-
-    return Response({"action": "Done"}, status=status.HTTP_200_OK)
+        return Response({"action": "Done"}, status=status.HTTP_200_OK)

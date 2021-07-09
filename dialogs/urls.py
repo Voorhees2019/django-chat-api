@@ -3,23 +3,27 @@ from . import views
 
 app_name = "dialogs"
 urlpatterns = [
-    path("threads/", views.ThreadListCreate.as_view(), name="threads_list"),
+    path("threads/", views.ThreadListCreate.as_view(), name="thread_list"),
     path(
         "threads/<int:pk>/",
         views.ThreadRetrieveDestroy.as_view(),
-        name="threads_detail",
+        name="thread_detail",
     ),
     path(
-        "threads/<int:thread_pk>/messages/", views.messages_list, name="messages_list"
+        "threads/<int:thread_pk>/messages/",
+        views.MessageViewSet.as_view({"get": "list", "post": "create"}),
+        name="message_list",
     ),
     path(
-        "threads/<int:thread_pk>/messages/<int:message_pk>/",
-        views.message,
-        name="message",
+        "messages/<int:pk>/",
+        views.MessageViewSet.as_view(
+            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="message_detail",
     ),
     path(
         "threads/<int:thread_pk>/messages/read_until/",
-        views.message_read_until,
-        name="message_read_until",
+        views.MessagesReadUntil.as_view(),
+        name="messages_read_until",
     ),
 ]
