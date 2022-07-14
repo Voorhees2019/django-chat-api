@@ -1,1 +1,2 @@
-# Yalantis-Django
+# A simple chat API
+
